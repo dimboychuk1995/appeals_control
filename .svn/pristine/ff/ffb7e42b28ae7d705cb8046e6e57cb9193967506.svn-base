@@ -1,0 +1,131 @@
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ taglib uri="http://www.springframework.org/tags/form" prefix="form" %>
+<%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
+<c:set var="baseURL" value="${pageContext.request.contextPath}"/>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+	<link rel="stylesheet" type="text/css" media="screen" href="${baseURL}/resources/css/jquery/redmond/jquery-ui-1.9.2.custom.min.css" />
+	<link rel="stylesheet" type="text/css" media="screen" href="${baseURL}/resources/css/jqgrid/ui.jqgrid.css" />
+
+	<script type="text/javascript" src="${baseURL}/resources/js/jquery/jquery-1.8.3.js"></script>
+	<script type="text/javascript">
+	    var jq = jQuery.noConflict();
+	</script>
+	<script type="text/javascript" src="${baseURL}/resources/js/jquery/jquery-ui-1.9.2.custom.min.js"></script>
+	<script type="text/javascript" src="${baseURL}/resources/js/jqgrid/grid.locale-ua.js" ></script>
+	<script type="text/javascript" src="${baseURL}/resources/js/jqgrid/jquery.jqGrid.min.js"></script>
+	
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<title>Звернення громадян</title>
+	
+</head>
+
+<body >
+
+<script type="text/javascript">
+	jq(function() {
+        jq('.date').datepicker({ dateFormat: 'dd.mm.yy' });
+		jq("#grid").jqGrid({
+		   	url:'${baseURL}/appeal/searh',
+			datatype: 'json',
+			mtype: 'POST',
+            colNames:
+            [
+                '', 'Вх.№', 'Дата', 'Від кого', 'Зміст зверненя', 'Вид зверненя', 'Призначений виконавець',
+                'Вих.№', 'Дата', 'Чернявський', 'Зміст відповіді', 'Тернін надання відповіді, дн.', 'Кінцевий термін',
+                'Відповідь надіслана у термін, дн.','Нагадування', 'Працівник'
+
+            ],
+            colModel: [
+                {name: 'id', index: 'id', width: 45, formatter: returnHyperLink,sortable:false},
+                {name: 'in_number', index: 'in_number', width: 100},
+                {name: 'in_date', index: 'in_date', width: 100, sorttype:'date',formatter: 'date', formatoptions: { srcformat: 'Y/m/d', newformat: 'd.m.Y'}},
+                {name: 'customer', index: 'customer', width: 100},
+                {name: 'text_appeal', index: 'text_appeal', width: 100},
+                {name: 'type_appeal.name', index: 'type_appeal.name', width: 100},
+                {name: 'executor', index: 'executor', width: 100},
+                {name: 'out_number', index: 'out_number', width: 100},
+                {name: 'out_date', index: 'out_date', width: 100, sorttype:'date',formatter: 'date', formatoptions: { srcformat: 'Y/m/d', newformat: 'd.m.Y'} },
+                {name: 'some_second_name', index: 'some_second_name', width: 100},
+                {name: 'text_answer', index: 'text_answer', width: 100},
+                {name: 'term_answer', index: 'term_answer', width: 100},
+                {name: 'deadline_term', index: 'deadline_term', width: 100, sorttype:'date',formatter: 'date', formatoptions: { srcformat: 'Y/m/d', newformat: 'd.m.Y'} },
+                {name: 'response_term', index: 'response_term', width: 100},
+                {name: 'reminder', index: 'reminder', width: 100, sorttype:'date',formatter: 'date', formatoptions: { srcformat: 'Y/m/d', newformat: 'd.m.Y'} },
+                {name: 'employee', index: 'employee', width: 100}
+
+            ],
+		   	postData: {
+			},
+			rowNum:20,
+		   	rowList:[20,40,60],
+		   	height: 350,
+		  	autowidth: true,
+			rownumbers: true,
+		   	pager: '#pager',
+		   	sortname: 'id',
+		    viewrecords: true,
+		    sortorder: "asc",
+		    caption:"Звернення",
+		    emptyrecords: "Порожній список",
+            hidegrid: false,
+		    loadonce: true,
+		    loadComplete: function() {
+			},
+		    jsonReader : {
+		        root: "rows",
+		        page: "page",
+		        total: "total",
+		        records: "records",
+		        repeatitems: false,
+		        cell: "cell",
+		        id: "id"
+		    }
+		});
+        function returnHyperLink(cellValue, options, rowdata, action)
+        {
+            return "<a href='${baseURL}/appeal/edit/" + cellValue + "' ><img src='${baseURL}/resources/img/edit.png' width='20' height='21'></a>";
+        }
+
+        jq("#grid").jqGrid('navGrid','#pager',
+				{edit:false,add:false,del:false,search:true},
+				{ },
+		        { },
+		        { }, 
+				{ 
+			    	sopt:['eq', 'ne', 'lt', 'gt', 'cn', 'bw', 'ew'],
+			        closeOnEscape: true, 
+			        	multipleSearch: true, 
+			         	closeAfterSearch: true }
+		);
+		jq("#btnFilter").click(function(){
+			jq("#grid").jqGrid('searchGrid',
+					{multipleSearch: false, 
+						sopt:['eq']}
+			);
+		});
+
+	});
+</script>
+<p>Користувач: <sec:authentication property="principal.username" /></p>
+<div id="jqgrid">
+	<table id="grid"></table>
+	<div id="pager"></div>
+</div>
+
+<div id="dialog" title="Feature not supported" style="display:none">
+	<p>Вибачте, ваш браузер не підтримується!.</p>
+</div>
+
+<div id="dialogSelectRow" title="Warning" style="display:none">
+	<p>Please select row</p>
+</div>
+
+</body>
+
+</html>
+

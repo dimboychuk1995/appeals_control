@@ -1,0 +1,47 @@
+package oe.roma.appeals.service;
+
+import oe.roma.appeals.domain.Appeal;
+import org.apache.log4j.Logger;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.annotation.Resource;
+import javax.sql.DataSource;
+import java.util.List;
+
+
+@Service("reportsService")
+@Transactional
+public class ReportsService {
+
+    protected static Logger logger = Logger.getLogger("service");
+
+    private JdbcTemplate jdbcTemplate;
+    @Resource(name = "appealsService")
+    private AppealsService appealsService;
+
+    @Resource(name = "dataSource")
+    public void setDataSource(DataSource dataSource) {
+        this.jdbcTemplate = new JdbcTemplate(dataSource);
+    }
+    String mainSql = "SELECT r.*, ta.name AS type_appeal_text, s.signature FROM registry r " +
+            "LEFT JOIN type_appeals ta ON r.type_appeal = ta.id " +
+            "LEFT JOIN signatures s on r.signature_id=s.id ";
+
+    public List<Appeal> getListOnControlD4(int month, int year){
+
+        String sql = mainSql+" where month(r.in_date)="+month+" and year(r.in_date)="+year+" and (r.out_date is null and r.out_number is null and r.text_answer is null) ";
+        return jdbcTemplate.query(sql, appealsService.mapper);
+    }
+    public List<Appeal> getListOffControlD3(int month, int year){
+
+        String sql = mainSql+" where month(r.in_date)="+month+" and year(r.in_date)="+year+" and (r.out_date is not null or r.out_number is not null or r.text_answer is not null) ";
+        return jdbcTemplate.query(sql, appealsService.mapper);
+    }
+    public List<Appeal> getListExpiredD5(int month, int year){
+
+        String sql = mainSql+" where month(r.in_date)="+month+" and year(r.in_date)="+year+" and r.deadline_term<=now() and (r.out_date is null or r.out_number is  null or r.text_answer is  null) ";
+        return jdbcTemplate.query(sql, appealsService.mapper);
+    }
+}

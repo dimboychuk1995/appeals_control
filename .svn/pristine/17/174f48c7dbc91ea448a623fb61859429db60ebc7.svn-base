@@ -1,0 +1,22 @@
+/**
+ * Created by us9159 on 29.05.2014.
+ */
+$(document).ready(function(){
+    $('.tabs li').click(function(){
+        var link = "."+$(this).attr('link');
+        $('.tabs li').removeClass('current-tabs');
+        $(this).addClass('current-tabs');
+        console.log(link);
+        $('.for-tabs').hide();
+        $(link).show();
+    });
+    $('.date-out,.date-in').change(function(){
+        var bigDate = $('.date-out').val().split('.');
+        var smallDate = $('.date-in').val().split('.');
+        bigDate = new Date(bigDate[1]+'.'+bigDate[0]+'.'+bigDate[2]);
+        smallDate = new Date(smallDate[1]+'.'+smallDate[0]+'.'+smallDate[2]);
+       $('.response_term').val(+(bigDate-smallDate)/ (1000*60*60*24));
+        console.log(bigDate + "  " + smallDate);
+
+    })
+});

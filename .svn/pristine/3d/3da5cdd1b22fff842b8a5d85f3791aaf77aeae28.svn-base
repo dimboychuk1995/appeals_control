@@ -1,0 +1,18 @@
+$(document).ready(function(){
+    var check  = 1;
+    if(check){
+        $('#element_to_pop_up').bPopup(
+            {
+                speed: 450,
+                transition: 'slideDown'}
+        );
+    }
+    $('#expired').click(function(){
+        $('#expired_element_to_pop_up').bPopup(
+            {
+                speed: 450,
+                transition: 'slideDown'}
+        );
+        return false;
+    })
+})

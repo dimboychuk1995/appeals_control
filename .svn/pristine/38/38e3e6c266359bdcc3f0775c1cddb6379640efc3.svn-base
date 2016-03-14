@@ -1,0 +1,94 @@
+package oe.roma.appeals.service;
+
+import oe.roma.appeals.domain.Appeal;
+import org.apache.log4j.Logger;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.ResultSetExtractor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.annotation.Resource;
+import javax.sql.DataSource;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+
+@Service("reportsService")
+@Transactional
+@SuppressWarnings("unchecked")
+public class ReportsService {
+
+    protected static Logger logger = Logger.getLogger("service");
+
+    private JdbcTemplate jdbcTemplate;
+    @Resource(name = "appealsService")
+    private AppealsService appealsService;
+
+    @Resource(name = "dataSource")
+    public void setDataSource(DataSource dataSource) {
+        this.jdbcTemplate = new JdbcTemplate(dataSource);
+    }
+    String mainSql = "SELECT r.*, ta.name AS type_appeal_text, s.signature FROM registry r " +
+            "LEFT JOIN type_appeals ta ON r.type_appeal = ta.id " +
+            "LEFT JOIN signatures s on r.signature_id=s.id ";
+
+    public List<Appeal> getFullList(){
+
+        String sql = mainSql;
+        return jdbcTemplate.query(sql, appealsService.mapper);
+    }
+
+    public List<Appeal> getListOnControlD4(int month, int year){
+
+        String sql = mainSql+" where month(r.in_date)="+month+" and year(r.in_date)="+year+" and (r.out_date is null and r.out_number is null and r.text_answer is null) ";
+        return jdbcTemplate.query(sql, appealsService.mapper);
+    }
+    public List<Appeal> getListOffControlD3(int month, int year){
+
+        String sql = mainSql+" where month(r.in_date)="+month+" and year(r.in_date)="+year+" and (r.out_date is not null or r.out_number is not null or r.text_answer is not null) ";
+        return jdbcTemplate.query(sql, appealsService.mapper);
+    }
+    public List<Appeal> getListExpiredD5(int month, int year){
+
+        String sql = mainSql+" where month(r.in_date)="+month+" and year(r.in_date)="+year+" and r.deadline_term<=now() and (r.out_date is null or r.out_number is  null or r.text_answer is  null) ";
+        return jdbcTemplate.query(sql, appealsService.mapper);
+    }
+
+    public Map getListTemp(int month, int year){
+        String sql =""+
+                "select 'Всього поставлено на контроль' as name, (select count(*) from registry r where YEAR(r.in_date)="+year+" and MONTH(r.in_date)="+month+") as count "+
+                " union " +
+                "select ta.name, count(*) as count from registry r " +
+                "left join type_appeals ta on r.type_appeal=ta.id " +
+                "where YEAR(r.in_date)="+year+" and MONTH(r.in_date)=" +month +
+                " group by ta.name " +
+                " union " +
+                "select 'Надано відповідей' as name, " +
+                "(select count(*) from registry r where YEAR(r.out_date)="+year+" and MONTH(r.out_date)="+month+") as count " +
+                " union " +
+                "select 'в строк' as name, " +
+                "(select count(*) from registry r where YEAR(r.out_date)="+year+" and MONTH(r.out_date)="+month+" and r.out_date<=r.deadline_term ) as count" +
+                " union " +
+                "select 'протерміновано' as name, " +
+                "(select count(*) from registry r where YEAR(r.deadline_term)="+year+" and MONTH(r.deadline_term)="+month+" and (r.out_date>r.deadline_term or r.out_date is null)) as count" +
+                " union " +
+                "select 'В роботі' as name, " +
+                "(select count(*) from registry r where YEAR(r.in_date)="+year+" and MONTH(r.in_date)="+month+" and r.out_date is null and month(r.deadline_term)<>"+month+") as count"; 
+        return  (Map) jdbcTemplate.query(sql, mapExtractor);
+    }
+
+    ResultSetExtractor mapExtractor = new ResultSetExtractor() {
+        public Object extractData(ResultSet rs) throws SQLException {
+            Map<String, Integer> mapOfKeys = new LinkedHashMap<String, Integer>();
+            while (rs.next()) {
+                String name = rs.getString("name");
+                Integer count = rs.getInt("count");
+                mapOfKeys.put(name, count);
+            }
+            return mapOfKeys;
+        }
+    };
+}

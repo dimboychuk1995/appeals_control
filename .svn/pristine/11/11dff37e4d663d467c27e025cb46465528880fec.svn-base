@@ -1,0 +1,53 @@
+package oe.roma.appeals.reports;
+
+import jxl.write.*;
+import oe.roma.appeals.domain.Appeal;
+import org.springframework.web.servlet.view.document.AbstractJExcelView;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Created by us8610 on 03.06.14.
+ */
+public class ExcelBuilder extends AbstractJExcelView {
+
+    @Override
+    protected void buildExcelDocument(Map<String, Object> model,
+                                      WritableWorkbook workbook, HttpServletRequest request,
+                                      HttpServletResponse response) throws Exception {
+
+        // get data model which is passed by the Spring container
+        List<Appeal> list = (List<Appeal>) model.get("list");
+        DateFormat customDateFormat = new DateFormat ("dd.MM.yyyy");
+        WritableCellFormat dateFormat = new WritableCellFormat (customDateFormat);
+        // create a new Excel sheet
+        WritableSheet sheet = workbook.createSheet("report1", 0);
+
+        sheet.addCell(new Label(0, 0, "Вх.№"));
+        sheet.addCell(new Label(1, 0, "Дата"));
+        sheet.addCell(new Label(2, 0, "Від кого"));
+        sheet.addCell(new Label(3, 0, "Зміст звернення"));
+        sheet.addCell(new Label(4, 0, "Вид звернення"));
+        sheet.addCell(new Label(5, 0, "Признечений виконавець"));
+        sheet.addCell(new Label(6, 0, "Термін надання відповіді, дн."));
+        sheet.addCell(new Label(7, 0, "Кінцевий термін"));
+        // create data rows
+        int rowCount = 1;
+
+        for (Appeal appeal : list) {
+            sheet.addCell(new Label(0, rowCount, appeal.getIn_number()));
+            sheet.addCell(new DateTime(1, rowCount, appeal.getIn_date(),dateFormat));
+            sheet.addCell(new Label(2, rowCount, appeal.getCustomer()));
+            sheet.addCell(new Label(3, rowCount, appeal.getText_appeal()));
+            sheet.addCell(new Label(4, rowCount, appeal.getType_appeal().getName()));
+            sheet.addCell(new Label(5, rowCount, appeal.getExecutor()));
+            sheet.addCell(new Label(6, rowCount, appeal.getTerm_answer()==null? " ": appeal.getTerm_answer().toString()));
+            sheet.addCell(new DateTime(7, rowCount,appeal.getDeadline_term(),dateFormat));
+
+            rowCount++;
+        }
+    }
+}

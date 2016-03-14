@@ -1,0 +1,72 @@
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@taglib uri="http://www.springframework.org/tags/form" prefix="form" %>
+<c:set var="baseURL" value="${pageContext.request.contextPath}"/>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <title>Звернення громадян</title>
+    <script>
+        window.onload = function(){
+
+            var currentMenu = "${activeItem}";
+            if (currentMenu){
+                $('li[link=${activeItem}]').addClass('current-tabs');
+                $('.for-tabs').hide();
+                var link = "."+$('.current-tabs').attr('link');
+                $(link).show();
+            };
+
+
+            $('.tabs li').click(function(){
+                var link = "."+$(this).attr('link');
+                $('.tabs li').removeClass('current-tabs');
+                $(this).addClass('current-tabs');
+                console.log(link);
+                $('.for-tabs').hide();
+                $(link).show();
+            });
+        }
+    </script>
+</head>
+
+<body>
+<ul class="tabs tabs-new-appeals">
+    <li link="add-new-appeals">новий вид звернення</li>
+    <li link="add-new-director">список директорів</li>
+</ul>
+<div class="for-tabs add-new-appeals">
+    <form:form method="POST" action="${baseURL}/dictionary/addTypeAppeal" modelAttribute="typeAppeal" style="margin-top:50px;margin-left:100px">
+        <div class="row">
+            <label>Назва</label>
+            <form:input path="name" required="true"/>
+        </div>
+        <div class="row">
+            <label>Термін відповіді</label>
+            <form:input type="number" path="term_to_answer" min="1" max="100" required="true"/>
+        </div>
+        <div class="row">
+            <label>Строк нагадування</label>
+            <form:input type="number" path="reminder_term" min="1" max="100" required="true"/>
+        </div>
+        <button class="submit">додати</button>
+    </form:form>
+</div>
+<div class="for-tabs add-new-director">
+    <form:form method="POST" action="${baseURL}/dictionary/addSignature" modelAttribute="signature" style="margin-top:50px;margin-left:100px">
+        <div class="row">
+            <label>ПІБ</label>
+            <form:input path="signature" required="true"/>
+        </div>
+        <button class="submit">додати</button>
+    </form:form>
+</div>
+
+
+</body>
+
+</html>
+

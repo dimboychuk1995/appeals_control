@@ -1,0 +1,394 @@
+package oe.roma.appeals.service;
+
+import oe.roma.appeals.domain.Appeal;
+import oe.roma.appeals.domain.Signature;
+import oe.roma.appeals.domain.TypeAppeal;
+import oe.roma.appeals.domain.User;
+import org.apache.log4j.Logger;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.mail.javamail.MimeMessagePreparator;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.annotation.Resource;
+import javax.mail.internet.MimeMessage;
+import javax.sql.DataSource;
+import java.security.Principal;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+
+/**
+ * Service for processing Persons.
+ * <p/>
+ * For a complete reference to Spring JDBC and JdbcTemplate
+ * see http://static.springsource.org/spring/docs/3.0.x/spring-framework-reference/html/jdbc.html
+ * <p/>
+ * For transactions, see http://static.springsource.org/spring/docs/3.0.x/spring-framework-reference/html/transaction.html
+ */
+@Service("appealsService")
+@Transactional
+public class AppealsService {
+
+    protected static Logger logger = Logger.getLogger("service");
+
+    @Resource(name = "userService")
+    private IUserService userService;
+
+    private JdbcTemplate jdbcTemplate;
+
+    @Resource(name = "dataSource")
+    public void setDataSource(DataSource dataSource) {
+        this.jdbcTemplate = new JdbcTemplate(dataSource);
+    }
+
+    @Autowired
+    private JavaMailSender mailSender;
+
+    public List<Appeal> getAll(int limit, int page, String sidx, String sord, String filters, String search) {
+        logger.debug("Retrieving all registries");
+        String searchQuery = getSearchQuery(filters, search);
+        System.out.println(searchQuery);
+        int total = 0;
+        int count = getCountAppeals();
+
+        if (count > 0) {
+            total = count / limit + 1;
+        } else {
+            total = 0;
+        }
+
+        if (page > total) {
+            page = total;
+        }
+
+        int start = limit * page - limit;
+        if (start < 0) start = 0;
+
+
+        // Prepare our SQL statement
+        String sql = "SELECT r.*, ta.name AS type_appeal_text, s.signature FROM registry r " +
+                "LEFT JOIN type_appeals ta ON r.type_appeal = ta.id " +
+                "LEFT JOIN signatures s on r.signature_id=s.id " +
+                " where 1=1 " + searchQuery + " order by " + sidx + " " + sord + " LIMIT " + start + ", " + limit;
+
+        System.out.println(sql);
+        // Retrieve all
+        return jdbcTemplate.query(sql, mapper);
+    }
+
+    public Integer getCountAppeals() {
+        String sql = "SELECT COUNT(*) FROM registry r LEFT JOIN type_appeals ta ON r.type_appeal = ta.id LEFT JOIN signatures s on r.signature_id=s.id";
+
+        return jdbcTemplate.queryForObject(sql, Integer.class);
+
+    }
+
+    public List<TypeAppeal> getTypeAppeals() {
+        logger.debug("Retrieving all type_appeals");
+        String sql = "SELECT id, name FROM type_appeals";
+
+        // Maps a SQL result to a Java object
+        RowMapper<TypeAppeal> mapper = new RowMapper<TypeAppeal>() {
+            public TypeAppeal mapRow(ResultSet rs, int rowNum) throws SQLException {
+                TypeAppeal typeAppeal = new TypeAppeal();
+                typeAppeal.setId(rs.getInt("id"));
+                typeAppeal.setName(rs.getString("name"));
+                return typeAppeal;
+            }
+        };
+        return jdbcTemplate.query(sql, mapper);
+    }
+
+    public List<Signature> getSignatures() {
+        logger.debug("Retrieving all type_appeals");
+        String sql = "SELECT id, signature FROM signatures";
+
+        // Maps a SQL result to a Java object
+        RowMapper<Signature> mapper = new RowMapper<Signature>() {
+            public Signature mapRow(ResultSet rs, int rowNum) throws SQLException {
+                Signature signature = new Signature();
+                signature.setId(rs.getInt("id"));
+                signature.setSignature(rs.getString("signature"));
+                return signature;
+            }
+        };
+        return jdbcTemplate.query(sql, mapper);
+    }
+
+
+    public void add(Appeal appeal) {
+        logger.debug("Додавання нового звернення");
+        Principal principal = SecurityContextHolder.getContext().getAuthentication();
+        User currentUser = userService.getUserByName(principal.getName());
+
+        Integer termToAnswer = getTermToAnswer(appeal.getType_appeal().getId());
+        Date reminderTerm = getReminderTerm(appeal.getIn_date(), termToAnswer, appeal.getType_appeal().getId());
+
+        jdbcTemplate.update("insert into registry (in_number, in_date, customer, text_appeal, type_appeal, executor,employee,term_answer, deadline_term) values(?,?,?,?,?,?,?,?,?)",
+                new Object[]{
+                        appeal.getIn_number(),
+                        appeal.getIn_date(),
+                        appeal.getCustomer(),
+                        appeal.getText_appeal(),
+                        appeal.getType_appeal().getId(),
+                        appeal.getExecutor(),
+                        currentUser.getFullname(),
+                        termToAnswer,
+                        reminderTerm});
+    }
+
+
+    public void delete(Integer id) {
+        logger.debug("Deleting existing registry");
+
+        String sql = "delete from registry where id = ?";
+
+        jdbcTemplate.update(sql, new Object[]{id});
+    }
+
+    public void edit(Appeal appeal) {
+
+        System.out.println(appeal);
+        Integer responseTerm = getResponseTerm(appeal.getOut_date(), appeal.getIn_date());
+        if (appeal.getSignature().getId() == 0) appeal.getSignature().setId(null);
+        String sql = "update registry set "
+                + "in_number = ?, "
+                + "in_date = ?, "
+                + "customer = ?, "
+                + "text_appeal = ?, "
+                + "type_appeal = ?, "
+                + "executor = ?, "
+                + "out_number = ?, "
+                + "out_date = ?, "
+                + "signature_id = ?, "
+                + "text_answer = ?, "
+                + "term_answer = ?, "
+                + "deadline_term = ?, "
+                + "response_term = ?, "
+                + "employee = ?, "
+                + "reminder_telephone = ?, "
+                + "reminder_email = ?, "
+                + "reminder_sc = ?, "
+                + "telephone_check = ?, "
+                + "email_check = ?, "
+                + "sc_check = ?, "
+                + "email = ? "
+                + "where id = ?";
+
+        jdbcTemplate.update(sql, new Object[]{
+                appeal.getIn_number(),
+                appeal.getIn_date(),
+                appeal.getCustomer(),
+                appeal.getText_appeal(),
+                appeal.getType_appeal().getId(),
+                appeal.getExecutor(),
+                appeal.getOut_number(),
+                appeal.getOut_date(),
+                appeal.getSignature().getId(),
+                appeal.getText_answer(),
+                appeal.getTerm_answer(),
+                appeal.getDeadline_term(),
+                responseTerm,
+                appeal.getEmployee(),
+                appeal.getReminder_telephone(),
+                appeal.getReminder_email(),
+                appeal.getReminder_sc(),
+                appeal.getTelephone_check()==null ? "false" :appeal.getTelephone_check().toString(),
+                appeal.getEmail_check()==null ? "false" :appeal.getEmail_check().toString(),
+                appeal.getSc_check()==null ? "false" :appeal.getSc_check().toString(),
+                appeal.getEmail(),
+                appeal.getId()
+        });
+    }
+
+    public Appeal get(Integer id) {
+        logger.debug("Отримання звернення #" + id + " з бази");
+        String sql = "SELECT r.*, ta.name AS type_appeal_text, s.signature FROM registry r " +
+                "LEFT JOIN type_appeals ta ON r.type_appeal = ta.id " +
+                "LEFT JOIN signatures s on r.signature_id=s.id " +
+                "where r.id=?";
+
+        Appeal appeal = (Appeal) jdbcTemplate.queryForObject(
+                sql, new Object[]{id}, mapper);
+        return appeal;
+    }
+
+    ;
+
+
+    RowMapper<Appeal> mapper = new RowMapper<Appeal>() {
+        public Appeal mapRow(ResultSet rs, int rowNum) throws SQLException {
+            Appeal appeal = new Appeal();
+            appeal.setId(rs.getInt("id"));
+            appeal.setIn_number(rs.getString("in_number"));
+            appeal.setIn_date(rs.getDate("in_date"));
+            appeal.setCustomer(rs.getString("customer"));
+            appeal.setText_appeal(rs.getString("text_appeal"));
+            appeal.getType_appeal().setName(rs.getString("type_appeal_text"));
+            appeal.getType_appeal().setId(rs.getInt("type_appeal"));
+            appeal.setExecutor(rs.getString("executor"));
+            appeal.setOut_number(rs.getString("out_number"));
+            appeal.setOut_date(rs.getDate("out_date"));
+            appeal.getSignature().setSignature(rs.getString("signature"));
+            appeal.getSignature().setId(rs.getInt("signature_id"));
+            appeal.setText_answer(rs.getString("text_answer"));
+            appeal.setTerm_answer(rs.getInt("term_answer"));
+            if (rs.wasNull()) appeal.setTerm_answer(null);
+            appeal.setDeadline_term(rs.getDate("deadline_term"));
+            appeal.setResponse_term(rs.getInt("response_term"));
+            if (rs.wasNull()) appeal.setResponse_term(null);
+            appeal.setEmployee(rs.getString("employee"));
+            appeal.setReminder_telephone(rs.getDate("reminder_telephone"));
+            appeal.setReminder_email(rs.getDate("reminder_email"));
+            appeal.setTelephone_check(Boolean.valueOf(rs.getString("telephone_check")));
+            appeal.setEmail_check(Boolean.valueOf(rs.getString("email_check")));
+            appeal.setEmail(rs.getString("email"));
+            appeal.setReminder_sc(rs.getDate("reminder_sc"));
+            appeal.setSc_check(Boolean.valueOf(rs.getString("sc_check")));
+            return appeal;
+        }
+    };
+
+    //нагадування термінів
+    public List<Appeal> reminderList() {
+
+        String sql = "SELECT r.*, ta.name AS type_appeal_text, s.signature FROM registry r  " +
+                " LEFT JOIN type_appeals ta ON r.type_appeal = ta.id  " +
+                " LEFT JOIN signatures s on r.signature_id=s.id " +
+                " WHERE DATEDIFF(r.deadline_term, now()) <= ta.reminder_term AND r.reminder_email IS NULL AND r.reminder_telephone IS NULL";
+
+        return jdbcTemplate.query(sql, mapper);
+    }
+
+    //протермінування
+    public List<Appeal> expiredList() {
+
+        String sql = "SELECT r.*, ta.name AS type_appeal_text, s.signature FROM registry r  " +
+                " LEFT JOIN type_appeals ta ON r.type_appeal = ta.id  " +
+                " LEFT JOIN signatures s on r.signature_id=s.id " +
+                " where (now() > r.deadline_term and r.out_date > r.deadline_term) or (now() > r.deadline_term and r.out_date is null) ";
+
+        return jdbcTemplate.query(sql, mapper);
+    }
+
+    public String getSearchQuery(String filters, String search) {
+        JSONObject json = new JSONObject();
+        JSONArray rules;
+        String field;
+        String qWhere = new String();
+        if (search != null) {
+            if (search.equals("true")) {
+                json = new JSONObject(filters);
+                rules = json.getJSONArray("rules");
+                for (int ji = 0; ji < rules.length(); ji++) {
+                    field = rules.getJSONObject(ji).getString("field");
+                    String data = rules.getJSONObject(ji).getString("data");
+                    if (field.equals("in_date") || field.equals("out_date") || field.equals("deadline_term")) {
+                        rules.getJSONObject(ji).put("data", formatDate(rules.getJSONObject(ji).getString("data")));
+                    }
+                    ;
+                    qWhere += " " + json.getString("groupOp") + " ";
+                    String op = rules.getJSONObject(ji).getString("op");
+                    if (op.equals("eq")) {
+                        qWhere += field + " = '" + rules.getJSONObject(ji).getString("data") + "'";
+                    } else if (op.equals("ne")) {
+                        qWhere += field + " <> '" + rules.getJSONObject(ji).getString("data") + "'";
+                    } else if (op.equals("bw")) {
+                        qWhere += field + "  LIKE  '" + rules.getJSONObject(ji).getString("data") + "%'";
+                    } else if (op.equals("cn")) {
+                        qWhere += field + "  LIKE  " + "'%" + rules.getJSONObject(ji).getString("data") + "%'";
+                    } else if (op.equals("nu")) {
+                        qWhere += field + "  IS NULL ";
+                    } else if (op.equals("gt")) {
+                        qWhere += field + "  > '" + rules.getJSONObject(ji).getString("data") + "'";
+                    } else if (op.equals("lt")) {
+                        qWhere += field + "  < '" + rules.getJSONObject(ji).getString("data") + "'";
+                    }
+                }
+            }
+        }
+        return qWhere;
+    }
+
+    public String formatDate(String dateIn) {
+        if (dateIn.length() < 10) return dateIn;
+        DateFormat originalFormat = new SimpleDateFormat("dd.MM.yyyy", Locale.ENGLISH);
+        DateFormat targetFormat = new SimpleDateFormat("yyyy-MM-dd");
+        Date date = null;
+        try {
+            date = originalFormat.parse(dateIn);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        String formattedDate = targetFormat.format(date);
+        return formattedDate;
+    }
+
+    public Integer getTermToAnswer(int type_appeal) {
+
+        String sql = "SELECT term_to_answer from type_appeals where id=?";
+        return jdbcTemplate.queryForObject(sql, new Object[]{type_appeal}, Integer.class);
+    }
+
+    private Date getReminderTerm(Date in_date, int term_to_answer, int type_appeal) {
+
+        String sql = "SELECT DATE_add(?,interval ? DAY) from type_appeals where id=?";
+        return jdbcTemplate.queryForObject(sql, new Object[]{in_date, term_to_answer, type_appeal}, Date.class);
+    }
+
+    public Integer getResponseTerm(Date out_date, Date in_date) {
+
+        if ((in_date == null) || (out_date == null)) return null;
+
+        Integer diffInDays = (int) ((out_date.getTime() - in_date.getTime()) / (1000 * 60 * 60 * 24));
+
+        return diffInDays;
+    }
+
+
+    public void sendEmail(final String executor, final Integer dateDiff, final String in_number, final Date in_date, final String text_appeal, final String customer, final Date deadline_term, final String email) {
+
+        mailSender.send(new MimeMessagePreparator() {
+
+            @Override
+            public void prepare(MimeMessage mimeMessage) throws Exception {
+                MimeMessageHelper messageHelper = new MimeMessageHelper(
+                        mimeMessage, true, "UTF-8");
+                String message = "<div style=\"width: 600px; margin: 0 auto\">\n" +
+                        "    <div style=\"font-weight: bold\">\n" +
+                        "        Шановний(a) "+ executor + "\n" +
+                        "    </div>\n" +
+                        "    Повідомляємо Вам, що через "+ dateDiff + " днів спливає строк надання відповіді на лист з вх.№ "+ in_number + " від "+ convertDate(in_date) + "р. "+ text_appeal + " від "+ customer + " Просимо взяти до уваги кінцевий термін надання відповіді "+ convertDate(deadline_term) +"р."+
+                        "    <div style=\"width: 500px; margin: 0 auto; line-height: 40px\"><i>Це повідомлення інформаційне та не потребує відповіді</i></div>\n" +
+                        "     </div>";
+
+                messageHelper.setFrom("roman.vintoniak@oe.if.ua");
+                messageHelper.setTo(email);
+                messageHelper.setSubject("Нагадування про настання терміну відповіді");
+                messageHelper.setText(message,true);
+            }
+        });
+
+
+
+
+    }
+    public String convertDate(Date date){
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd.MM.yyyy");
+
+        return simpleDateFormat.format(date);
+    }
+}

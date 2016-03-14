@@ -1,0 +1,70 @@
+/**
+ * Created by us9159 on 29.05.2014.
+ */
+$(document).ready(function(){
+    $('.tabs li').click(function(){
+        var link = "."+$(this).attr('link');
+        $('.tabs li').removeClass('current-tabs');
+        $(this).addClass('current-tabs');
+        console.log(link);
+        $('.for-tabs').hide();
+        $(link).show();
+    });
+    $('.date-out,.date-in,#type_appeal_id').change(function(){
+        var bigDate = $('.date-out').val().split('.');
+        var smallDate = $('.date-in').val().split('.');
+        bigDate = new Date(bigDate[1]+'.'+bigDate[0]+'.'+bigDate[2]);
+        smallDate = new Date(smallDate[1]+'.'+smallDate[0]+'.'+smallDate[2]);
+       $('.response_term').val(+(bigDate-smallDate)/ (1000*60*60*24));
+        if($(this).hasClass('date-in') || $(this).attr('id') == 'type_appeal_id'){
+            $.ajax({
+                url: '/appeals/appeal/getTermToAnswer',
+                type: 'POST',
+                data: {id: $('#type_appeal_id').val()},
+                success: function(data){
+                    Date.prototype.addDays = function(days) {
+                        this.setDate(this.getDate() + days);
+                        return this;
+                    };
+                    var addDate = smallDate.addDays(data);
+                    var newDate = new Date(addDate.getMonth()+1 +'.'+ addDate.getDate() +'.'+ addDate.getFullYear());
+                    $('#deadline_term').val(((newDate.getDate()<10)?"0"+newDate.getDate():newDate.getDate())+'.'+(((newDate.getMonth()+1)<10)?"0"+(newDate.getMonth()+1):(newDate.getMonth()+1))+'.'+newDate.getFullYear());
+                    $('#term_answer').val(data)
+                }
+            });
+        }
+
+    });
+    $('#sendEmail').click(function(){
+        if(!$('input[name="email"]').val()){
+            alert('Введіть email!!');
+            return;
+        }
+        var appeal = {
+            "out_date": $.datepicker.parseDate("dd.mm.yy", $('input[name="out_date"]').val()),
+            "executor":$('input[name="executor"]').val(),
+            "in_number":$('input[name="in_number"]').val(),
+            "in_date": $.datepicker.parseDate("dd.mm.yy", $('input[name="in_date"]').val()),
+            "text_appeal":$('input[name="text_appeal"]').val(),
+            "customer":$('input[name="customer"]').val(),
+            "deadline_term":$.datepicker.parseDate("dd.mm.yy",$('input[name="deadline_term"]').val()),
+            "email":$('input[name="email"]').val()
+        };
+        $.ajax({
+            url: '/appeals/appeal/sendEmail',
+            type: 'POST',
+            contentType : 'application/json; charset=utf-8',
+           // dataType : 'json',
+            data: JSON.stringify(appeal),
+            success: function(data){
+                alert('Відправлено успішно!');
+                $('input[name="reminder_email"]').val(data);
+                $('input[name="email_check"]').prop("checked", true);
+
+            },
+            error: function (request, status, error) {
+                alert(error);
+            }
+        });
+    });
+});

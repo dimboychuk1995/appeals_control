@@ -1,0 +1,108 @@
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@taglib uri="http://www.springframework.org/tags/form" prefix="form" %>
+<c:set var="baseURL" value="${pageContext.request.contextPath}"/>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+    <link rel="stylesheet" type="text/css" media="screen"
+          href="${baseURL}/resources/css/jquery/redmond/jquery-ui-1.9.2.custom.min.css"/>
+    <script type="text/javascript" src="${baseURL}/resources/js/jquery/jquery-1.8.3.js"></script>
+    <script type="text/javascript" src="${baseURL}/resources/js/jquery/jquery-ui-1.9.2.custom.min.js"></script>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <title>Звернення громадян</title>
+    <script type="text/javascript">
+        $(document).ready(function () {
+                    $('.date').datepicker({ dateFormat: 'dd.mm.yy' });
+                }
+        );
+
+    </script>
+</head>
+
+<body>
+
+<script type="text/javascript"></script>
+
+<p>Редагування зверненя</p>
+<form:form method="GET" action="${baseURL}" modelAttribute="appeal">
+    <table>
+        <tr>
+            <td>Вхідний №</td>
+            <td><form:input path="in_number"/></td>
+        </tr>
+        <tr>
+            <td>Дата</td>
+            <td><form:input path="in_date" cssClass="date"/></td>
+        </tr>
+        <tr>
+            <td>Від кого</td>
+            <td><form:input path="customer"/></td>
+        </tr>
+        <tr>
+            <td>Зміст звернення</td>
+            <td><form:input path="text_appeal"/></td>
+        </tr>
+        <tr>
+            <td>Вид зверненя</td>
+            <td>
+                <form:select path="type_appeal.id">
+                    <form:options items="${type_appeals}" itemValue="id" itemLabel="name"/>
+                </form:select>
+            </td>
+        </tr>
+        <tr>
+            <td>Призначений виконавець</td>
+            <td><form:input path="executor"/></td>
+        </tr>
+        <tr>
+            <td>Вих.№</td>
+            <td><form:input path="out_number"/></td>
+        </tr>
+        <tr>
+            <td>Дата</td>
+            <td><form:input path="out_date" cssClass="date"/></td>
+        </tr>
+        <tr>
+            <td>Чернявський</td>
+            <td><form:input path="some_second_name"/></td>
+        </tr>
+        <tr>
+            <td>Зміст відповіді</td>
+            <td><form:input path="text_answer"/></td>
+        </tr>
+        <tr>
+            <td>Термін надання відповіді, дн.</td>
+            <td><form:input path="term_answer"/></td>
+        </tr>
+        <tr>
+            <td>Кінцевий термін</td>
+            <td><form:input path="deadline_term" cssClass="date"/></td>
+        </tr>
+        <tr>
+            <td>Відповідь надіслана у термін, дн.</td>
+            <td><form:input path="response_term"/></td>
+        </tr>
+        <tr>
+            <td>Нагадування</td>
+            <td><form:input path="reminder" cssClass="date"/></td>
+        </tr>
+        <tr>
+            <td>Працівник канцелярії, який зареєстрував вхідний лист</td>
+            <td><form:input path="employee"/></td>
+        </tr>
+
+        <tr>
+            <td colspan="2">
+                <input type="submit" value="Знайти"/>
+            </td>
+        </tr>
+    </table>
+</form:form>
+
+</body>
+
+</html>
+

@@ -1,0 +1,13 @@
+/**
+ * Created by us9159 on 29.05.2014.
+ */
+$(document).ready(function(){
+    $('.tabs li').click(function(){
+        var link = "."+$(this).attr('link');
+        $('.tabs li').removeClass('current-tabs');
+        $(this).addClass('current-tabs');
+        console.log(link);
+        $('.for-tabs').hide();
+        $(link).show();
+    })
+});

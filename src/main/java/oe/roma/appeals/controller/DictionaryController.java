@@ -1,0 +1,85 @@
+package oe.roma.appeals.controller;
+
+import oe.roma.appeals.domain.Signature;
+import oe.roma.appeals.domain.TypeAppeal;
+import oe.roma.appeals.service.AppealsService;
+import oe.roma.appeals.service.IUserService;
+import org.apache.log4j.Logger;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import javax.annotation.Resource;
+
+/**
+ * Handles CRUD requests for users
+ */
+@Controller
+@RequestMapping("/dictionary")
+public class DictionaryController {
+
+    protected static Logger logger = Logger.getLogger("controller");
+
+    @Resource(name = "appealsService")
+    private AppealsService appealsService;
+    @Resource(name = "userService")
+    private IUserService userService;
+
+
+    @RequestMapping(method = RequestMethod.GET)
+    public String dictionary(ModelMap model) {
+
+        model.addAttribute("typeAppealList", appealsService.getTypeAppeals());
+        model.addAttribute("signaturesList", appealsService.getSignatures());
+        model.addAttribute("typeAppeal", new TypeAppeal());
+        model.addAttribute("signature", new Signature());
+        model.addAttribute("active", "dictionary");
+
+        if(model.get("activeItem")==null) model.addAttribute("activeItem", "add-new-appeals");
+
+        return "dictionary";
+
+    }
+
+
+    @RequestMapping(value = "/addTypeAppeal", method = RequestMethod.POST)
+    public String addTypeAppeal(@ModelAttribute TypeAppeal typeAppeal,RedirectAttributes redirectAttributes) {
+        appealsService.addTypeAppeal(typeAppeal);
+        redirectAttributes.addFlashAttribute("activeItem", "add-new-appeals");
+        return "redirect:/dictionary";
+    }
+
+    @RequestMapping(value = "/addSignature", method = RequestMethod.POST)
+    public String addSignature(@ModelAttribute Signature signature,RedirectAttributes redirectAttributes) {
+        appealsService.addSignature(signature);
+        redirectAttributes.addFlashAttribute("activeItem", "add-new-director");
+        return "redirect:/dictionary";
+    }
+
+    @RequestMapping(value = "/getTypeAppeal/{id}", method = RequestMethod.POST)
+    public @ResponseBody TypeAppeal getTypeAppeal(@PathVariable Integer id) {
+        TypeAppeal typeAppeal = appealsService.getTypeAppealById(id);
+        return typeAppeal;
+    }
+
+    @RequestMapping(value = "/editTypeAppeal", method = RequestMethod.POST)
+    public String editTypeAppeal(@ModelAttribute TypeAppeal typeAppeal, RedirectAttributes redirectAttributes) {
+        appealsService.editTypeAppeal(typeAppeal);
+        redirectAttributes.addFlashAttribute("activeItem", "add-new-appeals");
+        return "redirect:/dictionary";
+    }
+
+    @RequestMapping(value = "/getSignature/{id}", method = RequestMethod.POST)
+    public @ResponseBody Signature getSignatureById(@PathVariable Integer id) {
+        Signature signature = appealsService.getSignatureById(id);
+        return signature;
+    }
+
+    @RequestMapping(value = "/editSignature", method = RequestMethod.POST)
+    public String editSignature(@ModelAttribute Signature signature, RedirectAttributes redirectAttributes) {
+        appealsService.editSignature(signature);
+        redirectAttributes.addFlashAttribute("activeItem", "add-new-director");
+        return "redirect:/dictionary";
+    }
+}

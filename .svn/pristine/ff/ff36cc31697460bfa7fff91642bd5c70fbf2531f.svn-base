@@ -1,0 +1,137 @@
+function loadUser() {
+    $("#personSearch_loader").show();
+    $("#rez_search").empty();
+    $('#element_to_pop_up').bPopup(
+        {// easing: 'easeOutBack', //uses jQuery easing plugin
+            speed: 450,
+            transition: 'slideDown'}
+    );
+    var user = $('input[name=fullname]').val();
+    $.ajax({
+        url: "http://10.93.1.79/soap_services/soap.php",
+        type: 'GET',
+        data: {"lastName": user},
+        dataType: 'jsonp',
+        success: function(data) {
+            console.log(data.length);
+            person = false;
+            if(data.length > 0) {
+                for (var i = 0; i < data.length; i++) {
+                    $("#rez_search").append('<div class="person">'+
+                        '<div class="name"><b>'+data[i].Family+" "+data[i].Name+" "+data[i].Father+'</b></div>'+
+                        '<div class="tabno">'+data[i].Tabno+'</div>'+
+                        '<div class="Email">'+data[i].Email+'</div>'+
+                        '<div class="posada" org_txt="'+data[i].Orgtxt+'" deb_no="'+data[i].Customer+'" tel="'+data[i].TelAts+'" email="'+data[i].Email+'">'+data[i].Jobtxt+'</div>'+
+                        '</div>');
+                }
+            } else {
+                person = null;
+                $("#rez_search").append('<div class="emptyResult">Пошук по заданих критеріях не дав результату!</div>');
+            }
+            $(".person").click(function(){
+                person = $(this);
+                $('input[name=fullname]').val($(this).find('.name').text());
+                $('input[name=job_position]').val($(this).find('.posada').text());
+                $('input[name=tab_num]').val($(this).find('.tabno').text());
+                $('input[name=email]').val($(this).find('.Email').text());
+                $(".person").css({color: '#333333'});
+                $(this).css({color: '#61ce61'});
+                $("#do_reg").css("visibility", "visible");
+
+            });
+            $('.apply').click(function () {
+                console.log(person);
+                if (person) {
+                    $('.row2, input[type="submit"]').show();
+                    $('input[name=fullname]').val(person.find('.name').text());
+                    $('input[name=job_position]').val(person.find('.posada').text());
+                    $('input[name=tab_num]').val(person.find('.tabno').text());
+                    $('input[name=email]').val(person.find('.Email').text());
+                    $('#element_to_pop_up').bPopup().close();
+                } else {
+                    if(person == null){
+                        $('#element_to_pop_up').bPopup().close();
+                    }else{
+                        alert('спочатку виберіть особу!');
+                    }
+                }
+            })
+            $("#personSearch_loader").hide();
+        },
+        error: function(data) {
+            console.log(data);
+            $("#rez_search").append('<div class="emptyResult">Помилка отримання даних!</div>');
+            $("#personSearch_loader").hide();
+            $('.apply').click(function () {$('#element_to_pop_up').bPopup().close();});
+        }
+    });
+}	
+$(document).ready(function(){
+        
+        $('.active-directory').click(function(){
+            $("#reg_form").css("visibility", "visible");
+            $("#reg_form").show("slow");
+            $("#mes_2").show("slow");
+            //$('input[name=login_w]').attr('disabled','disabled');
+            //$('input[name=pass_w]').attr('disabled','disabled');
+           // $('input[name=login_w]').attr('readonly', true);
+           // $('input[name=pass_w]').attr('readonly', true);
+            $("#mes_1").css("color", "#090");
+            $("#chek_user").remove();
+            //$("#load_1").css("visibility", "visible");
+//            $.ajax({
+//                type: "POST",
+//
+//                url: "http://10.93.1.79/optimus/script/ldap.php",
+//                data: {},
+//                dataType: "html",
+//                success: function(html) {
+//                    $("#load_1").css("visibility", "hidden");
+//                    if(html == "TRUE") {
+//                        $("#reg_form").css("visibility", "visible");
+//                        $("#reg_form").show("slow");
+//                        $("#mes_2").show("slow");
+//                        //$('input[name=login_w]').attr('disabled','disabled');
+//                        //$('input[name=pass_w]').attr('disabled','disabled');
+//                        $('input[name=login_w]').attr('readonly', true);
+//                        $('input[name=pass_w]').attr('readonly', true);
+//                        $("#mes_1").css("color", "#090");
+//                        $("#chek_user").remove();
+//                    } else {
+//                        alert('Невірно введені дані');
+//                    }
+//                }
+//            });
+
+      
+        });
+				    
+$('form').submit(function(){
+    var check = false;
+    $('form input[type="text"],form input[type="password"]').each(function( index ) {
+  console.log( index + ": " + $( this ).val() );
+        if($( this ).val().length<1){
+            check = check+1;
+            $(this).css({border: "solid 1px red"});
+        }else{
+            $(this).css({border: "solid 1px #ccc"});
+        }
+});
+    if(check){
+        return false
+    }else{
+        if($('input[name=repeat_pasword]').val()!==$('input[name=password]').val()){
+            alert('паролі не співпадають');
+            $('input[name=repeat_pasword]').css({border: "solid 1px red"});
+            $('input[name=password]').css({border: "solid 1px red"});
+            return false;
+        }
+    }
+
+});
+      
+    
+    
+
+
+})

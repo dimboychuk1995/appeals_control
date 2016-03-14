@@ -1,0 +1,116 @@
+package oe.roma.appeals.controller;
+
+import oe.roma.appeals.domain.Appeal;
+import oe.roma.appeals.service.AppealsService;
+import oe.roma.appeals.service.ReportsService;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@Controller
+@RequestMapping("/reports")
+@SuppressWarnings("unchecked")
+public class ReportsController {
+    @Resource(name = "appealsService")
+    private AppealsService appealsService;
+
+    @Resource(name = "reportsService")
+    private ReportsService reportsService;
+
+    private Map<Integer,String> months = new HashMap<Integer, String>();
+    {
+        months.put(1,"січень");
+        months.put(2,"лютий");
+        months.put(3,"березень");
+        months.put(4,"квітень");
+        months.put(5,"травень");
+        months.put(6,"червень");
+        months.put(7,"липень");
+        months.put(8,"серпень");
+        months.put(9,"вересень");
+        months.put(10,"жовтень");
+        months.put(11,"листопад");
+        months.put(12,"грудень");
+    }
+    private List<Integer> years = new ArrayList<Integer>();
+    {
+        years.add(2014);
+        years.add(2015);
+        years.add(2016);
+        years.add(2017);
+        years.add(2018);
+    }
+
+    @RequestMapping(method = RequestMethod.GET)
+    private String reportsIndex(ModelMap model){
+        model.addAttribute("months",months);
+        model.addAttribute("years",years);
+        model.addAttribute("active", "reports");
+    return "reports";
+
+    }
+    @RequestMapping(value = "/report2", method = RequestMethod.GET)
+    public String downloadExcelD2(@RequestParam int month, @RequestParam int year, ModelMap model) {
+
+        Map<String,Integer> list = reportsService.getListTemp(month, year);
+
+        model.addAttribute("list", list);
+        model.addAttribute("year",String.valueOf(year));
+        model.addAttribute("month",String.valueOf(months.get(month)));
+
+        return "report2";
+    }
+
+    @RequestMapping(value = "/report4", method = RequestMethod.GET)
+    public String downloadExcelD4(@RequestParam int month, @RequestParam int year, ModelMap model) {
+        // create some sample data
+        List<Appeal> list = reportsService.getListOnControlD4(month, year);
+
+        model.addAttribute("list", list);
+        model.addAttribute("year",String.valueOf(year));
+        model.addAttribute("month",String.valueOf(months.get(month)));
+        return "report4";
+    }
+
+    @RequestMapping(value = "/report3", method = RequestMethod.GET)
+    public String downloadExcelD3(@RequestParam int month, @RequestParam int year, ModelMap model) {
+
+        List<Appeal> list = reportsService.getListOffControlD3(month, year);
+
+        model.addAttribute("list", list);
+        model.addAttribute("year",String.valueOf(year));
+        model.addAttribute("month",String.valueOf(months.get(month)));
+
+        return "report3";
+    }
+    @RequestMapping(value = "/report5", method = RequestMethod.GET)
+    public String downloadExcelD5(@RequestParam int month, @RequestParam int year, ModelMap model) {
+
+        List<Appeal> list = reportsService.getListExpiredD5(month, year);
+
+        model.addAttribute("list", list);
+        model.addAttribute("year",String.valueOf(year));
+        model.addAttribute("month",String.valueOf(months.get(month)));
+
+        return "report5";
+    }
+
+    @RequestMapping(value = "/reportAll", method = RequestMethod.GET)
+    public String downloadExcelAll(ModelMap model) {
+
+        List<Appeal> list = reportsService.getFullList();
+
+        model.addAttribute("list", list);
+
+        return "reportAll";
+    }
+
+}

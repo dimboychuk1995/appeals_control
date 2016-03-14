@@ -1,0 +1,60 @@
+package oe.roma.appeals.controller;
+
+import oe.roma.appeals.domain.Appeal;
+import oe.roma.appeals.service.AppealsService;
+import oe.roma.appeals.service.ReportsService;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+
+import javax.annotation.Resource;
+import java.util.List;
+
+@Controller
+@RequestMapping("/reports")
+public class ReportsController {
+    @Resource(name = "appealsService")
+    private AppealsService appealsService;
+
+    @Resource(name = "reportsService")
+    private ReportsService reportsService;
+
+    @RequestMapping(method = RequestMethod.GET)
+    private String reportsIndex(){
+
+        return "reports";
+    }
+    @RequestMapping(value = "/report4", method = RequestMethod.GET)
+    public String downloadExcelD4(ModelMap model) {
+        // create some sample data
+        List<Appeal> list = reportsService.getListOnControlD4(5, 2014);
+
+        model.addAttribute("list", list);
+        model.addAttribute("year","2015");
+        // return a view which will be resolved by an excel view resolver
+        return "report4";
+    }
+
+    @RequestMapping(value = "/report3", method = RequestMethod.GET)
+    public String downloadExcelD3(ModelMap model) {
+
+        List<Appeal> list = reportsService.getListOnControlD4(5,2014);
+
+        model.addAttribute("list", list);
+        model.addAttribute("year","2014");
+
+        return "report3";
+    }
+    @RequestMapping(value = "/report5", method = RequestMethod.GET)
+    public String downloadExcelD5(ModelMap model) {
+
+        List<Appeal> list = reportsService.getListExpiredD5(5, 2014);
+
+        model.addAttribute("list", list);
+        model.addAttribute("year","2014");
+
+        return "report5";
+    }
+
+}

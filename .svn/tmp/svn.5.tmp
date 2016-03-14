@@ -1,0 +1,5 @@
+# database properties
+app.jdbc.driverClassName=com.mysql.jdbc.Driver
+app.jdbc.url=jdbc:mysql://10.93.10.49:3306/appeals_control
+app.jdbc.username=root
+app.jdbc.password=Vtytl;th

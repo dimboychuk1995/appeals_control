@@ -1,0 +1,20 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans-2.5.xsd">
+
+    <bean id="report2"
+          class="oe.roma.appeals.reports.MainReportD2Builder">
+    </bean>
+    <bean id="report4"
+          class="oe.roma.appeals.reports.ListOnControlD4Builder">
+    </bean>
+
+    <bean id="report3"
+          class="oe.roma.appeals.reports.ListOffControlD3Builder">
+    </bean>
+    <bean id="report5"
+          class="oe.roma.appeals.reports.ListExpiredD5Builder">
+    </bean>
+
+</beans>

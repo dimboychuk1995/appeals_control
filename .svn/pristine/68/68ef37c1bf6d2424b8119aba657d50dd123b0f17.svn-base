@@ -1,0 +1,151 @@
+package oe.roma.appeals.domain;
+
+import java.util.Date;
+
+public class Appeal {
+
+        private Integer id;
+        private String in_number;
+        private Date in_date;
+        private String customer;
+        private String text_appeal;
+        private TypeAppeal type_appeal = new TypeAppeal();
+        private String executor;
+        private String out_number;
+        private Date out_date;
+        private String some_second_name;
+        private String text_answer;
+        private Integer term_answer;
+        private Date deadline_term;
+        private Integer response_term;
+        private Date reminder;
+        private String employee;
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public String getIn_number() {
+        return in_number;
+    }
+
+    public void setIn_number(String in_number) {
+        this.in_number = in_number;
+    }
+
+    public Date getIn_date() {
+        return in_date;
+    }
+
+    public void setIn_date(Date in_date) {
+        this.in_date = in_date;
+    }
+
+    public String getCustomer() {
+        return customer;
+    }
+
+    public void setCustomer(String customer) {
+        this.customer = customer;
+    }
+
+    public String getText_appeal() {
+        return text_appeal;
+    }
+
+    public void setText_appeal(String text_appeal) {
+        this.text_appeal = text_appeal;
+    }
+
+    public TypeAppeal getType_appeal() {
+        return type_appeal;
+    }
+
+    public void setType_appeal(TypeAppeal type_appeal) {
+        this.type_appeal = type_appeal;
+    }
+
+    public String getExecutor() {
+        return executor;
+    }
+
+    public void setExecutor(String executor) {
+        this.executor = executor;
+    }
+
+    public String getOut_number() {
+        return out_number;
+    }
+
+    public void setOut_number(String out_number) {
+        this.out_number = out_number;
+    }
+
+    public Date getOut_date() {
+        return out_date;
+    }
+
+    public void setOut_date(Date out_date) {
+        this.out_date = out_date;
+    }
+
+    public String getSome_second_name() {
+        return some_second_name;
+    }
+
+    public void setSome_second_name(String some_second_name) {
+        this.some_second_name = some_second_name;
+    }
+
+    public String getText_answer() {
+        return text_answer;
+    }
+
+    public void setText_answer(String text_answer) {
+        this.text_answer = text_answer;
+    }
+
+    public Integer getTerm_answer() {
+        return term_answer;
+    }
+
+    public void setTerm_answer(Integer term_answer) {
+        this.term_answer = term_answer;
+    }
+
+    public Date getDeadline_term() {
+        return deadline_term;
+    }
+
+    public void setDeadline_term(Date deadline_term) {
+        this.deadline_term = deadline_term;
+    }
+
+    public Integer getResponse_term() {
+        return response_term;
+    }
+
+    public void setResponse_term(Integer response_term) {
+        this.response_term = response_term;
+    }
+
+    public Date getReminder() {
+        return reminder;
+    }
+
+    public void setReminder(Date reminder) {
+        this.reminder = reminder;
+    }
+
+    public String getEmployee() {
+        return employee;
+    }
+
+    public void setEmployee(String employee) {
+        this.employee = employee;
+    }
+}

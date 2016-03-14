@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE tiles-definitions PUBLIC
+        "-//Apache Software Foundation//DTD Tiles Configuration 2.0//EN"
+        "http://tiles.apache.org/dtds/tiles-config_2_0.dtd">
+
+<tiles-definitions>
+
+    <!-- Default Main Template -->
+    <definition name=".mainTemplate" template="/WEB-INF/jsp/main.jsp">
+        <put-attribute name="menu" value="/WEB-INF/jsp/menu.jsp"/>
+        <put-attribute name="content" value=""/>
+    </definition>
+
+    <definition name="index" extends=".mainTemplate">
+        <put-attribute name="content" value="/WEB-INF/jsp/index.jsp"/>
+    </definition>
+
+    <definition name="addLetter" extends=".mainTemplate">
+        <put-attribute name="content" value="/WEB-INF/jsp/addLetter.jsp"/>
+    </definition>
+
+    <definition name="editLetter" extends=".mainTemplate">
+        <put-attribute name="content" value="/WEB-INF/jsp/editLetter.jsp"/>
+    </definition>
+
+    <definition name="reports" extends=".mainTemplate">
+        <put-attribute name="content" value="/WEB-INF/jsp/reports.jsp"/>
+    </definition>
+
+</tiles-definitions>

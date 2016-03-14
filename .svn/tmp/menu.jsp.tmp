@@ -1,0 +1,40 @@
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@taglib uri="http://www.springframework.org/tags/form" prefix="form" %>
+<%@ taglib uri="http://www.springframework.org/security/tags" prefix="security" %>
+<c:set var="baseURL" value="${pageContext.request.contextPath}"/>
+<html>
+<head>
+
+</head>
+<body>
+<div class="header">
+    <div class="title1"><h1>Контроль</h1></div>
+    <div class="title2"><h1>термінів</h1></div>
+    <div class="header-nav">
+        <div class="row">
+<<<<<<< .mine
+                <div class="span2 menu current-menu"><a href="${baseURL}">Головна</a></div>
+            <security:authorize access="hasAnyRole('ADMIN', 'EXECUTOR')">
+                <div class="span2 menu"><a href="${baseURL}/appeal/add">Нове зверення</a></div>
+            </security:authorize>
+            <security:authorize access="hasAnyRole('ADMIN', 'EXECUTOR')">
+                <div class="span2 menu"><a href="${baseURL}/reports">Звіти</a></div>
+            </security:authorize>
+            <security:authorize access="hasRole('ADMIN')">
+                <div class="span2 menu"><a href="">Довідники</a></div>
+            </security:authorize>
+                <div class="span2 menu"><a href="" id="expired">Протерміновані</a></div>
+=======
+            <div class="span2 menu current-menu"><a href="${baseURL}">Головна</a></div>
+            <div class="span2 menu"><a href="${baseURL}/appeal/add">Нове зверення</a></div>
+            <div class="span2 menu"><a href="${baseURL}/reports">Звіти</a></div>
+            <div class="span2 menu"><a href="${baseURL}/appeal/addTypeAppeal">Довідники</a></div>
+            <div class="span2 menu"><a href="" id="expired">Протерміновані</a></div>
+>>>>>>> .r27
+            <div class="span2 menu"><a href="${baseURL}/j_spring_security_logout">Вийти</a></div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
